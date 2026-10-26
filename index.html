@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Triangle Procrustes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a drafting table. The board is the page; the numbers sit in the margin beside it. */
+:root {
+  --bg: #f4f4f0; --panel: #fdfdfb; --ink: #1b1d22; --muted: #646872; --rule: #d3d4cf; --grid: #e7e7e2;
+  --abc: #2350c4; --abc-fill: rgba(35, 80, 196, 0.10); --abc-soft: rgba(35, 80, 196, 0.35);
+  --def: #d0661a; --def-fill: rgba(208, 102, 26, 0.10);
+  --ggb: #8040b8; --axis: #1f8a5a; --axis-soft: rgba(31, 138, 90, 0.4); --resid: #c8284a; --warn: #b45309;
+  --display: "Bricolage Grotesque", "Avenir Next", Arial, sans-serif;
+  --body: "Atkinson Hyperlegible", "Avenir Next", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121316; --panel: #1a1c20; --ink: #ebebe6; --muted: #a0a3ab; --rule: #33363c; --grid: #22252a;
+    --abc: #7c9cff; --abc-fill: rgba(124, 156, 255, 0.12); --abc-soft: rgba(124, 156, 255, 0.35);
+    --def: #f29546; --def-fill: rgba(242, 149, 70, 0.12);
+    --ggb: #c08af0; --axis: #4cc98d; --axis-soft: rgba(76, 201, 141, 0.4); --resid: #ff6b86; --warn: #f0a23a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121316; --panel: #1a1c20; --ink: #ebebe6; --muted: #a0a3ab; --rule: #33363c; --grid: #22252a;
+  --abc: #7c9cff; --abc-fill: rgba(124, 156, 255, 0.12); --abc-soft: rgba(124, 156, 255, 0.35);
+  --def: #f29546; --def-fill: rgba(242, 149, 70, 0.12);
+  --ggb: #c08af0; --axis: #4cc98d; --axis-soft: rgba(76, 201, 141, 0.4); --resid: #ff6b86; --warn: #f0a23a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+.wrap { max-width: 1320px; margin: 0 auto; display: grid; gap: 28px; }
+header { display: grid; gap: 6px; }
+h1 { font: 800 clamp(30px, 5vw, 50px)/1 var(--display); letter-spacing: -0.025em; margin: 0; }
+h1 em { font-style: normal; color: var(--def); }
+header p { margin: 0; color: var(--muted); max-width: 72ch; }
+.table { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+@media (max-width: 920px) { .table { grid-template-columns: minmax(0, 1fr); } }
+#board { display: block; width: 100%; height: min(68vh, 620px); min-height: 360px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; touch-action: none; cursor: grab; }
+#board:active { cursor: grabbing; }
+#history { display: block; width: 100%; height: 170px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
+aside { display: grid; gap: 18px; }
+fieldset { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: 12px 0 0; display: grid; gap: 10px; }
+legend { font: 600 12px var(--display); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding-right: 8px; }
+label.check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.row { display: grid; gap: 4px; font-size: 14px; }
+.row > span { display: flex; justify-content: space-between; }
+output, .num { font: 500 13px var(--mono); font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--def); }
+input[type=checkbox] { accent-color: var(--def); margin-top: 3px; }
+select { font: 14px var(--body); background: var(--panel); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 6px; width: 100%; }
+.buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: 700 14px var(--body); padding: 8px 14px; border-radius: 4px; border: 1px solid var(--def); background: var(--def); color: #fff; cursor: pointer; }
+button.ghost { background: transparent; color: var(--ink); border-color: var(--rule); }
+button:focus-visible, input:focus-visible, select:focus-visible, #board:focus-visible { outline: 2px solid var(--def); outline-offset: 2px; }
+dl { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin: 0; font-size: 14px; }
+dt { color: var(--muted); }
+dd { margin: 0; font: 500 13px var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+dd.warn { color: var(--warn); }
+.key { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.key span { display: flex; align-items: center; gap: 8px; }
+.key i { width: 24px; border-top: 2px solid; }
+section { display: grid; gap: 10px; min-width: 0; }
+h2 { font: 600 22px/1.2 var(--display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.note { margin: 0; color: var(--muted); font-size: 14px; max-width: 80ch; }
+.scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; font: 13px var(--mono); font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+th { font: 700 12px var(--body); color: var(--muted); }
+.l { text-align: left; }
+tr.on td { background: var(--def-fill); }
+.chip { display: inline-block; font: 700 11px var(--body); padding: 1px 7px; border-radius: 999px; margin-right: 4px; border: 1px solid; }
+.chip.best { color: var(--axis); }
+.chip.ggb { color: var(--ggb); }
+.chip.shown { color: var(--def); }
+.chip.warn { color: var(--warn); }
+.causes { display: grid; gap: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 860px) { .causes { grid-template-columns: minmax(0, 1fr); } }
+.causes article { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.causes h3 { font: 600 16px var(--display); margin: 0; }
+.causes p { margin: 0; font-size: 14px; }
+.causes .fix { color: var(--muted); }
+code { font: 13px var(--mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Triangle <em>Procrustes</em></h1>
+    <p>Fit triangle DEF onto ABC by moving, turning and, if allowed, mirroring it, the way the GeoGebra construction <a href="https://www.geogebra.org/m/M6drf6Ff">Procrustes analysis, reflections optimized</a> does with complex numbers. Drag any vertex. The table shows every pairing of vertices and which one each rule picks.</p>
+  </header>
+
+  <div class="table">
+    <section aria-label="Board">
+      <canvas id="board" tabindex="0" aria-label="Triangles ABC and DEF. Drag a vertex, or press 1 to 6 to pick one and move it with the arrow keys."></canvas>
+      <div class="key">
+        <span><i style="border-color: var(--abc)"></i>ABC, the target, centroid K</span>
+        <span><i style="border-color: var(--def)"></i>DEF, centroid J, and its fit D′E′F′ (dashed)</span>
+        <span><i style="border-color: var(--ggb); border-top-style: dotted"></i>the GeoGebra result, smallest |θ| turned by atan</span>
+        <span><i style="border-color: var(--resid)"></i>residuals, and <i style="border-color: var(--axis); border-top-style: dashed"></i>the mirror line of a mirror fit</span>
+      </div>
+    </section>
+
+    <aside aria-label="Settings">
+      <fieldset>
+        <legend>Triangles</legend>
+        <select id="preset" aria-label="Starting triangles">
+          <option value="geogebra">The GeoGebra file</option>
+          <option value="mirror">DEF is a mirror image</option>
+          <option value="halfturn">DEF is turned half a turn</option>
+          <option value="relabel">DEF turned 50° and relabelled</option>
+          <option value="tie">Nearly equilateral, near ties</option>
+        </select>
+        <div class="buttons"><button id="fit-view" class="ghost" type="button">Fit view</button></div>
+      </fieldset>
+      <fieldset>
+        <legend>Fit</legend>
+        <label class="check"><input id="mirror" type="checkbox" checked> Allow mirror images (u → ū)</label>
+        <label class="check"><input id="scaling" type="checkbox"> Allow scaling</label>
+        <label class="check"><input id="show-ggb" type="checkbox" checked> Show the GeoGebra result</label>
+      </fieldset>
+      <fieldset>
+        <legend>Motion</legend>
+        <div class="buttons"><button id="play" type="button">Play the fit</button></div>
+        <div class="row"><span><label for="t">From DEF to the fit</label><output id="out-t"></output></span><input id="t" type="range" min="0" max="1" step="0.001" value="1"></div>
+        <label class="check"><input id="smooth" type="checkbox" checked> Move smoothly when the pairing changes</label>
+        <div class="row"><span><label for="margin">Keep the pairing until another is better by</label><output id="out-margin"></output></span><input id="margin" type="range" min="0" max="30" step="1" value="5"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Shown fit</legend>
+        <dl>
+          <dt>rms residual</dt><dd id="rms"></dd>
+          <dt>turn</dt><dd id="turn"></dd>
+          <dt>scale</dt><dd id="scale"></dd>
+          <dt>lead over the next pairing</dt><dd id="gap"></dd>
+          <dt>pairing changes so far</dt><dd id="switches"></dd>
+        </dl>
+      </fieldset>
+    </aside>
+  </div>
+
+  <section aria-labelledby="h-hist">
+    <h2 id="h-hist">Every pairing’s error while you drag</h2>
+    <canvas id="history" aria-label="Residual of each pairing over the last moves"></canvas>
+    <p class="note">Thin lines are the twelve pairings, blue for turns and green for mirror images. The thick line is the one shown. A red tick marks a change of pairing. Wherever two thin lines cross at the bottom, the best fit is a different triangle on either side, and a jump there is not a bug but the answer changing.</p>
+  </section>
+
+  <section aria-labelledby="h-cand">
+    <h2 id="h-cand">All pairings, best first</h2>
+    <div class="scroll"><table id="candidates"></table></div>
+    <p class="note">For a pairing, s = Σ z̄ᵢ·u is summed over the centred vertices, with z from ABC and u from DEF. Turning DEF by −arg s minimises the squared distances, and the least error over all pairings is the fit. A mirror pairing replaces u by its conjugate ū before summing.</p>
+  </section>
+
+  <section aria-labelledby="h-ggb">
+    <h2 id="h-ggb">The GeoGebra construction’s six sums</h2>
+    <div class="scroll"><table id="ggb-table"></table></div>
+    <p class="note">As in the file. Each sum is turned into θ = atan(y/x) and the one with the smallest |θ| is used. Two things differ from least squares. atan forgets whether s points left or right, so when Re s &lt; 0 the turn is half a turn off. And the smallest turn is not the best fit. The sixth sum pairs u₁ twice, where u₂ was meant.</p>
+  </section>
+
+  <section aria-labelledby="h-jump">
+    <h2 id="h-jump">Why triangles jump, and what stops it</h2>
+    <div class="causes">
+      <article>
+        <h3>atan instead of atan2</h3>
+        <p>atan(y/x) gives the same angle for s and −s. When Re s &lt; 0 the triangle is turned the wrong way round, and as s crosses the imaginary axis the turn leaps by 180°.</p>
+        <p class="fix">Use −arg s, that is −atan2(y, x). Try “DEF is turned half a turn”.</p>
+      </article>
+      <article>
+        <h3>The best pairing changes</h3>
+        <p>Twelve pairings compete. Where two of them are equally good, the best fit is one triangle on one side and another on the other. The jump is real, and no formula removes it.</p>
+        <p class="fix">Keep the current pairing until another is clearly better, and move to the new fit along a path instead of in one frame. Try “Nearly equilateral”.</p>
+      </article>
+      <article>
+        <h3>A mirror image cannot be turned into</h3>
+        <p>No turn in the plane takes a triangle to its mirror image, so a fit that switches between turning and mirroring has no in-between to show. Swapping vertex labels does not help, since it reverses the order of travel but leaves the shape as it was.</p>
+        <p class="fix">Every mirror fit z ↦ a·z̄ is one reflection about the line at angle arg(a)/2. Show it as a half turn in space about that line: the triangle flattens onto the line and comes back reversed.</p>
+      </article>
+    </div>
+  </section>
+</div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
