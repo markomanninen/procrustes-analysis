@@ -138,6 +138,7 @@ code { font: 13px var(--mono); }
         <div class="buttons"><button id="play" type="button">Play the fit</button></div>
         <div class="row"><span><label for="t">From DEF to the fit</label><output id="out-t"></output></span><input id="t" type="range" min="0" max="1" step="0.001" value="1"></div>
         <label class="check"><input id="smooth" type="checkbox" checked> Move smoothly when the pairing changes</label>
+        <div class="row"><span><label for="sigma">Soft fit, blur σ</label><output id="out-sigma"></output></span><input id="sigma" type="range" min="0" max="3" step="0.05" value="0"></div>
         <div class="row"><span><label for="margin">Keep the pairing until another is better by</label><output id="out-margin"></output></span><input id="margin" type="range" min="0" max="30" step="1" value="5"></div>
       </fieldset>
       <fieldset>
@@ -148,6 +149,7 @@ code { font: 13px var(--mono); }
           <dt>scale</dt><dd id="scale"></dd>
           <dt>lead over the next pairing</dt><dd id="gap"></dd>
           <dt>pairing changes so far</dt><dd id="switches"></dd>
+          <dt>soft weights</dt><dd id="weights"></dd>
         </dl>
       </fieldset>
     </aside>
@@ -190,7 +192,7 @@ code { font: 13px var(--mono); }
       <article>
         <h3>The best pairing changes</h3>
         <p>Twelve pairings compete. Where two of them are equally good, the best fit is one triangle on one side and another on the other. The jump is real, and no formula removes it.</p>
-        <p class="fix">Keep the current pairing until another is clearly better, and move to the new fit along a path instead of in one frame. Try “Nearly equilateral”.</p>
+        <p class="fix">Keep the current pairing until another is clearly better, and move to the new fit along a path instead of in one frame. Or give up choosing: with a soft fit every pairing is weighted by e<sup>−(rms² − rms²<sub>best</sub>)/σ²</sup>, the two tied copies fade into each other, and their weighted mean moves without a jump. Try “Nearly equilateral” with σ around 1.</p>
       </article>
       <article>
         <h3>A mirror image cannot be turned into</h3>

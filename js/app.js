@@ -42,6 +42,7 @@ function opts() {
     ggb: $('show-ggb').checked,
     smooth: $('smooth').checked,
     margin: +$('margin').value / 100,
+    sigma: +$('sigma').value,
   }
 }
 
@@ -176,6 +177,43 @@ function drawBoard(an, o, now) {
   tri(ctx, def, { stroke: css('--def'), fill: css('--def-fill') })
   if (o.ggb) tri(ctx, Q.ggbPlaced(an), { stroke: css('--ggb'), dash: [3, 4], width: 1.6 })
 
+  if (o.sigma > 0 && state.t >= 1) {
+    drawSoft(ctx, an, o, abc)
+  } else {
+    drawHard(ctx, an, now, abc)
+  }
+  dot(ctx, an.K, css('--ink'), 'K', 3.5)
+  dot(ctx, an.J, css('--ink'), 'J', 3.5)
+  state.pts.forEach((p, i) => dot(ctx, p, i < 3 ? css('--abc') : css('--def'), NAMES[i], state.drag === i ? 8 : 6))
+}
+
+// Every pairing with a visible weight is drawn faintly in proportion to it, and the
+// weighted mean partner of each vertex of ABC is drawn solid.
+function drawSoft(ctx, an, o, abc) {
+  const soft = Q.softFit(an, o.sigma)
+  an.all.forEach((c, k) => {
+    const wk = soft.weights[k]
+    if (wk < 0.01) return
+    ctx.save()
+    ctx.globalAlpha = Math.min(1, 0.15 + wk)
+    tri(ctx, Q.placed(an, c.map), { stroke: c.mirror ? css('--axis') : css('--abc'), dash: [5, 4], width: 1.4 })
+    ctx.restore()
+  })
+  ctx.save()
+  ctx.strokeStyle = css('--resid')
+  ctx.lineWidth = 1.5
+  soft.pts.forEach((p, i) => {
+    ctx.beginPath()
+    ctx.moveTo(...toPx(abc[i]))
+    ctx.lineTo(...toPx(p))
+    ctx.stroke()
+  })
+  ctx.restore()
+  tri(ctx, soft.pts, { stroke: css('--def'), width: 2.6 })
+  soft.pts.forEach((p, i) => dot(ctx, p, css('--def'), `${'ABC'[i]}→`, 3.5, css('--muted')))
+}
+
+function drawHard(ctx, an, now, abc) {
   const fit = shownPoints(an, now)
   const c = state.chosen
   if (c.mirror && state.t >= 1 && !state.transition) {
@@ -206,9 +244,6 @@ function drawBoard(an, o, now) {
     ctx.restore()
   }
   fit.forEach((p, j) => dot(ctx, p, css('--def'), `${Q.LETTERS[j]}′`, 3.5, css('--muted')))
-  dot(ctx, an.K, css('--ink'), 'K', 3.5)
-  dot(ctx, an.J, css('--ink'), 'J', 3.5)
-  state.pts.forEach((p, i) => dot(ctx, p, i < 3 ? css('--abc') : css('--def'), NAMES[i], state.drag === i ? 8 : 6))
 }
 
 function drawHistory() {
@@ -425,6 +460,9 @@ function render(recordHistory = false) {
   tables(an)
   $('out-t').textContent = state.t.toFixed(2)
   $('out-margin').textContent = `${$('margin').value} %`
+  $('out-sigma').textContent = o.sigma > 0 ? o.sigma.toFixed(2) : 'off'
+  const top = Q.softFit(an, o.sigma).weights.map((v, k) => [v, k]).sort((a, b) => b[0] - a[0]).slice(0, 2)
+  $('weights').textContent = o.sigma > 0 ? top.map(([v, k]) => `${imageLabel(an.all[k])} ${Math.round(100 * v)} %`).join(' · ') : '–'
   if ((state.transition || state.playing) && !frame) frame = requestAnimationFrame(() => ((frame = 0), render()))
 }
 
@@ -482,7 +520,7 @@ board.addEventListener('keydown', (e) => {
 })
 
 $('preset').addEventListener('change', () => resetAll($('preset').value))
-for (const id of ['mirror', 'scaling', 'show-ggb', 'smooth', 'margin']) $(id).addEventListener('input', () => render())
+for (const id of ['mirror', 'scaling', 'show-ggb', 'smooth', 'margin', 'sigma']) $(id).addEventListener('input', () => render())
 $('t').addEventListener('input', () => {
   state.playing = null
   state.t = +$('t').value

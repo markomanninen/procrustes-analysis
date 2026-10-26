@@ -168,3 +168,26 @@ test('without mirror images an isosceles ABC is no tie: the edges then move with
   const isosceles = place([[-2, 0], [2, 0], [0, 3]], [4, -1], 0.8)
   assert.ok(gap(isosceles, DEF, { mirror: false }) > 1e-3)
 })
+
+test('the soft fit becomes the hard fit as σ goes to zero', async () => {
+  const { softFit } = await import('../js/procrustes.js')
+  const an = analyse(ABC, DEF, { mirror: true })
+  const hard = placed(an, an.best.map)
+  softFit(an, 1e-3).pts.forEach((p, i) => assert.ok(close(p, hard[an.best.perm[i]], 1e-9)))
+})
+
+test('across a tie the soft fit moves in small steps while the hard fit leaps', async () => {
+  const { softFit } = await import('../js/procrustes.js')
+  // move C across the isosceles shape (apex C on the perpendicular bisector of AB)
+  const frames = Array.from({ length: 201 }, (_, i) => [[-2, 0], [2, 0], [-0.5 + i / 200, 3]])
+  const D = [[10, 0], [11, 5], [18, 1]]
+  const step = (fit) => Math.max(...frames.slice(1).map((f, i) => Math.max(...[0, 1, 2].map((v) => abs(sub(fit(f)[v], fit(frames[i])[v]))))))
+  const hardFit = (f) => {
+    const an = analyse(f, D, { mirror: true })
+    const p = placed(an, an.best.map)
+    return [0, 1, 2].map((i) => p[an.best.perm[i]])
+  }
+  const soft = (f) => softFit(analyse(f, D, { mirror: true }), 0.6).pts
+  assert.ok(step(hardFit) > 1, `hard ${step(hardFit)}`)
+  assert.ok(step(soft) < 0.15, `soft ${step(soft)}`)
+})

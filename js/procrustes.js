@@ -139,3 +139,21 @@ export function shapeImages(def, mirror) {
 }
 
 export const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+// ---- soft fit ------------------------------------------------------------------------
+//
+// Instead of the single best pairing, every pairing is weighted by e^{−(rms² − rms_best²)/σ²}
+// and each vertex of ABC gets the weighted mean of where the pairings put its partner.
+// The weights change continuously with the vertices, so the fit does too: at a tie the two
+// pairings share the weight and the fit lies between them. σ → 0 is the hard fit. This is
+// the softassign idea of Rangarajan, Chui and Bookstein; lowering σ step by step is
+// deterministic annealing.
+export function softFit(an, sigma) {
+  const best = an.best.rms ** 2
+  const raw = an.all.map((c) => (sigma > 0 ? Math.exp(-(c.rms ** 2 - best) / (sigma * sigma)) : c.id === an.best.id ? 1 : 0))
+  const total = raw.reduce((a, b) => a + b, 0)
+  const weights = raw.map((v) => v / total)
+  const partner = (c, i) => add(an.K, applyMap(c.map, an.u[c.perm[i]]))
+  const pts = [0, 1, 2].map((i) => an.all.reduce((acc, c, k) => add(acc, scale(partner(c, i), weights[k])), [0, 0]))
+  return { pts, weights }
+}
