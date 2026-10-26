@@ -112,3 +112,59 @@ test('hysteresis keeps the current pairing near a tie', () => {
   assert.equal(withHysteresis(an, second.id, gap + 0.01).id, second.id)
   assert.equal(withHysteresis(an, second.id, gap / 2).id, an.best.id)
 })
+
+test('on the shape sphere |s|² is (1 + n·m)/2 of the norms, for every pairing', async () => {
+  const { shapePoint, shapeImages, dot3 } = await import('../js/procrustes.js')
+  const z = centre(ABC)
+  const u = centre(DEF)
+  const norm2 = (p) => p.reduce((t, q) => t + abs(q) ** 2, 0)
+  const an = analyse(ABC, DEF, { mirror: true })
+  shapeImages(DEF, true).forEach((m, k) => {
+    const lhs = abs(an.all[k].s) ** 2 / (norm2(z) * norm2(u))
+    assert.ok(Math.abs(lhs - (1 + dot3(shapePoint(ABC), m)) / 2) < 1e-12)
+  })
+})
+
+test('the best pairing is the image of DEF nearest to ABC on the sphere', async () => {
+  const { shapePoint, shapeImages, dot3 } = await import('../js/procrustes.js')
+  const n = shapePoint(ABC)
+  for (const opts of [{ mirror: false }, { mirror: true }, { mirror: true, scaling: true }]) {
+    const an = analyse(ABC, DEF, opts)
+    const dots = shapeImages(DEF, opts.mirror).map((m) => dot3(n, m))
+    assert.equal(dots.indexOf(Math.max(...dots)), an.best.id)
+  }
+})
+
+test('relabelling turns the sphere, mirroring reflects it through the equator', async () => {
+  const { shapePoint } = await import('../js/procrustes.js')
+  const [x, y, h] = shapePoint(DEF)
+  const cyc = shapePoint([DEF[1], DEF[2], DEF[0]])
+  const turn = Math.atan2(cyc[1], cyc[0]) - Math.atan2(y, x)
+  assert.ok(Math.abs(Math.cos(turn) - Math.cos((2 * Math.PI) / 3)) < 1e-12)
+  assert.ok(Math.abs(cyc[2] - h) < 1e-12)
+  const mir = shapePoint(DEF.map(conj))
+  assert.ok(Math.abs(mir[0] - x) + Math.abs(mir[1] - y) + Math.abs(mir[2] + h) < 1e-12)
+  const eq = shapePoint([[0, 0], [1, 0], [0.5, Math.sqrt(3) / 2]])
+  assert.ok(Math.abs(eq[2] - 1) < 1e-12)
+})
+
+const place = (pts, t, a) => pts.map((p) => add(mul(p, expi(a)), t))
+const gap = (A, D, opts) => {
+  const e = analyse(A, D, opts).all.map((c) => c.E).sort((x, y) => x - y)
+  return (e[1] - e[0]) / e[1]
+}
+
+test('with mirror images allowed, the best fit ties exactly when ABC is isosceles or flat', () => {
+  const isosceles = place([[-2, 0], [2, 0], [0, 3]], [4, -1], 0.8)
+  const flat = place([[0, 0], [3, 0], [-1.2, 0]], [-2, 5], 2.1)
+  for (const D of [DEF, [[1, 2], [5, -1], [0, 7]], [[0, 0], [1, 3], [4, 1]]]) {
+    assert.ok(gap(isosceles, D, { mirror: true }) < 1e-12)
+    assert.ok(gap(flat, D, { mirror: true }) < 1e-12)
+    assert.ok(gap(ABC, D, { mirror: true }) > 1e-3)
+  }
+})
+
+test('without mirror images an isosceles ABC is no tie: the edges then move with DEF', () => {
+  const isosceles = place([[-2, 0], [2, 0], [0, 3]], [4, -1], 0.8)
+  assert.ok(gap(isosceles, DEF, { mirror: false }) > 1e-3)
+})

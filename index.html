@@ -51,6 +51,7 @@ header p { margin: 0; color: var(--muted); max-width: 72ch; }
 @media (max-width: 920px) { .table { grid-template-columns: minmax(0, 1fr); } }
 #board { display: block; width: 100%; height: min(68vh, 620px); min-height: 360px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; touch-action: none; cursor: grab; }
 #board:active { cursor: grabbing; }
+#sphere { display: block; width: 100%; height: 340px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
 #history { display: block; width: 100%; height: 170px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
 aside { display: grid; gap: 18px; }
 fieldset { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: 12px 0 0; display: grid; gap: 10px; }
@@ -156,6 +157,14 @@ code { font: 13px var(--mono); }
     <h2 id="h-hist">Every pairing’s error while you drag</h2>
     <canvas id="history" aria-label="Residual of each pairing over the last moves"></canvas>
     <p class="note">Thin lines are the twelve pairings, blue for turns and green for mirror images. The thick line is the one shown. A red tick marks a change of pairing. Wherever two thin lines cross at the bottom, the best fit is a different triangle on either side, and a jump there is not a bug but the answer changing.</p>
+  </section>
+
+  <section aria-labelledby="h-sphere">
+    <h2 id="h-sphere">Where the fit jumps: the shape sphere</h2>
+    <canvas id="sphere" aria-label="Kendall's shape sphere with ABC's point, the twelve images of DEF and their cells"></canvas>
+    <p class="note">Every triangle is one point on this sphere, whatever its position, turn and size. The two poles are the equilateral triangles, one for each direction of travel. The equator is the triangles flattened to a line. The height of a point is (4/√3)·area / Σ|p − K|². For any pairing, |s|² = ‖z‖²‖u‖²·(1 + n<sub>ABC</sub> · n<sub>DEF′</sub>)/2, so the best pairing is simply the image of DEF nearest to ABC.</p>
+    <p class="note">The twelve dots are DEF as each pairing sees it. Relabelling turns the point 120° about the poles or half a turn about an axis in the equator, and a mirror image (marked *) reflects it through the equator. Each dot owns the part of the sphere nearest to it, and the orange part holds ABC. Two pairings tie on the great circle halfway between their dots.</p>
+    <p class="note">With mirror images allowed those circles never move, whatever DEF is. They are the equator, where a triangle is flat, and three circles through the poles, where it is isosceles with its apex at A, B or C. So the fit jumps exactly when ABC or DEF passes through a flat or an isosceles triangle. Without mirror images the twelve become six, the circles move with DEF, and the jumps are harder to predict.</p>
   </section>
 
   <section aria-labelledby="h-cand">

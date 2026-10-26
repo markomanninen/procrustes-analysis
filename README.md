@@ -17,6 +17,10 @@ where least squares differs:
 - **Reversing the vertex order is not a reflection.** It changes the order of travel, not the shape.
   A mirror image is fitted by conjugating u, which gives 12 candidates in all.
 
+The page also draws Kendall's shape sphere. There the best pairing is the image of DEF
+nearest to ABC. With mirror images allowed, the fit jumps exactly when either triangle
+passes through a flat or an isosceles shape.
+
 [docs/reflections.md](docs/reflections.md) explains why fitted triangles jump, especially
 around reflections, and how the page animates them without jumping.
 

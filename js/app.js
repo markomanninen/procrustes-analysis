@@ -31,6 +31,7 @@ const state = {
   t: 1,
   playing: null,
   history: [],
+  trail: [],
   drag: -1,
 }
 
@@ -245,6 +246,131 @@ function drawHistory() {
   H.forEach((r, i) => r.switched && ctx.fillRect(X(i) - 1, box.y, 2, box.h))
 }
 
+// ---- the shape sphere ----------------------------------------------------------------
+
+const rgbCache = {}
+function rgb(color) {
+  if (!rgbCache[color]) {
+    const c = document.createElement('canvas')
+    c.width = c.height = 1
+    const x = c.getContext('2d', { willReadFrequently: true })
+    x.fillStyle = color
+    x.fillRect(0, 0, 1, 1)
+    rgbCache[color] = Array.from(x.getImageData(0, 0, 1, 1).data)
+  }
+  return rgbCache[color]
+}
+const mix = (a, b, t) => [0, 1, 2].map((i) => Math.round(a[i] * (1 - t) + b[i] * t))
+const imageLabel = (c) => c.perm.map((j) => Q.LETTERS[j]).join('') + (c.mirror ? '*' : '')
+
+// Both halves of the sphere seen from outside: the upper half from above, the lower from
+// below, so the equator is the rim of each disc. Every pixel takes the colour of the image
+// of DEF nearest to it; where two colours meet, two pairings tie.
+function drawSphere(an, o) {
+  const { ctx, w, h } = prepare($('sphere'))
+  const dpr = window.devicePixelRatio || 1
+  const R = Math.max(40, Math.min(w / 4 - 22, h / 2 - 30))
+  const nA = Q.shapePoint(state.pts.slice(0, 3))
+  const imgs = Q.shapeImages(state.pts.slice(3), o.mirror)
+  const panel = rgb(css('--panel'))
+  const fills = imgs.map((_, k) => mix(panel, rgb(k < 6 ? css('--abc') : css('--axis')), k % 2 ? 0.1 : 0.2))
+  fills[an.best.id] = mix(panel, rgb(css('--def')), 0.32)
+  const edge = rgb(css('--ink'))
+  const size = Math.ceil(2 * R * dpr)
+  const sides = [1, -1]
+  const project = (p, side) => ({ x: side * p[0], y: p[1], front: p[2] * side >= 0 })
+  sides.forEach((side, d) => {
+    const cx = (w / 4) * (1 + 2 * d)
+    const cy = h / 2 - 8
+    const off = document.createElement('canvas')
+    off.width = off.height = size
+    const octx = off.getContext('2d')
+    const img = octx.createImageData(size, size)
+    const cell = new Int8Array(size * size).fill(-1)
+    for (let py = 0; py < size; py++) {
+      for (let px = 0; px < size; px++) {
+        const x = ((px + 0.5) / size) * 2 - 1
+        const y = 1 - ((py + 0.5) / size) * 2
+        const r2 = x * x + y * y
+        if (r2 > 1) continue
+        const P3 = [side * x, y, side * Math.sqrt(1 - r2)]
+        let best = 0
+        let bd = -2
+        imgs.forEach((m, k) => {
+          const v = Q.dot3(P3, m)
+          if (v > bd) [best, bd] = [k, v]
+        })
+        cell[py * size + px] = best
+      }
+    }
+    for (let i = 0; i < size * size; i++) {
+      const k = cell[i]
+      if (k < 0) continue
+      const right = i % size < size - 1 ? cell[i + 1] : k
+      const down = i + size < size * size ? cell[i + size] : k
+      const border = (right >= 0 && right !== k) || (down >= 0 && down !== k)
+      const c = border ? edge : fills[k]
+      img.data.set([c[0], c[1], c[2], border ? 170 : 255], i * 4)
+    }
+    octx.putImageData(img, 0, 0)
+    ctx.drawImage(off, cx - R, cy - R, 2 * R, 2 * R)
+    ctx.strokeStyle = css('--rule')
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    ctx.arc(cx, cy, R, 0, 2 * Math.PI)
+    ctx.stroke()
+    const toPx = (q) => [cx + q.x * R, cy - q.y * R]
+
+    // where ABC has been while you dragged, then where it is
+    ctx.strokeStyle = css('--abc')
+    ctx.lineWidth = 1.5
+    ctx.beginPath()
+    let pen = false
+    for (const n of state.trail) {
+      const q = project(n, side)
+      if (!q.front) {
+        pen = false
+        continue
+      }
+      const [a, b] = toPx(q)
+      if (pen) ctx.lineTo(a, b)
+      else ctx.moveTo(a, b)
+      pen = true
+    }
+    ctx.stroke()
+    ctx.font = '10px "JetBrains Mono", monospace'
+    imgs.forEach((m, k) => {
+      const q = project(m, side)
+      if (!q.front) return
+      const [a, b] = toPx(q)
+      const shown = k === state.chosen.id
+      ctx.fillStyle = shown ? css('--def') : k < 6 ? css('--abc') : css('--axis')
+      ctx.beginPath()
+      ctx.arc(a, b, shown ? 5 : 3, 0, 2 * Math.PI)
+      ctx.fill()
+      ctx.fillStyle = css('--ink')
+      ctx.fillText(imageLabel(an.all[k]), a + 6, b - 5)
+    })
+    const q = project(nA, side)
+    if (q.front) {
+      const [a, b] = toPx(q)
+      ctx.strokeStyle = css('--abc')
+      ctx.lineWidth = 2.5
+      ctx.beginPath()
+      ctx.arc(a, b, 7, 0, 2 * Math.PI)
+      ctx.stroke()
+      ctx.fillStyle = css('--ink')
+      ctx.font = '600 12px "Atkinson Hyperlegible", sans-serif'
+      ctx.fillText('ABC', a + 10, b + 14)
+    }
+    ctx.fillStyle = css('--muted')
+    ctx.font = '12px "Atkinson Hyperlegible", sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText(side > 0 ? 'upper half, seen from above' : 'lower half, seen from below', cx, cy + R + 20)
+    ctx.textAlign = 'left'
+  })
+}
+
 function tables(an) {
   const best = an.best
   const rows = [...an.all].sort((a, b) => a.E - b.E).map((c) => {
@@ -284,6 +410,8 @@ function render(recordHistory = false) {
   if (recordHistory) {
     state.history.push({ rms: [...an.all].sort((a, b) => a.id - b.id).map((c) => c.rms), chosen: state.chosen.rms, switched })
     if (state.history.length > 400) state.history.shift()
+    state.trail.push(Q.shapePoint(state.pts.slice(0, 3)))
+    if (state.trail.length > 400) state.trail.shift()
   }
   const now = performance.now()
   if (state.playing) {
@@ -293,6 +421,7 @@ function render(recordHistory = false) {
   }
   drawBoard(an, o, now)
   drawHistory()
+  drawSphere(an, o)
   tables(an)
   $('out-t').textContent = state.t.toFixed(2)
   $('out-margin').textContent = `${$('margin').value} %`
@@ -304,6 +433,7 @@ function resetAll(name) {
   state.chosen = null
   state.transition = null
   state.history = []
+  state.trail = []
   state.switches = 0
   fitView()
   render()

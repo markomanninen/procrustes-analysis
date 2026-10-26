@@ -114,3 +114,28 @@ export function withHysteresis(an, currentId, margin) {
 
 export const LETTERS = ['D', 'E', 'F']
 export const pairing = (perm) => perm.map((j, i) => `${'ABC'[i]}${LETTERS[j]}`).join(' ')
+
+// ---- Kendall's shape sphere ----------------------------------------------------------
+//
+// A triangle's shape, free of position, turn and size, as a unit vector. The poles are the
+// two equilateral triangles, the equator the collinear ones, and the height is
+// (4/√3)·area / Σ|p − K|². For any pairing, |s|²/(‖z‖²‖u‖²) = (1 + n_ABC · n_DEF′)/2, so the
+// best pairing is the image of DEF nearest to ABC, and two pairings tie on the great circle
+// halfway between their images.
+export function shapePoint(tri) {
+  const w1 = scale(sub(tri[1], tri[0]), 1 / Math.SQRT2)
+  const w2 = scale(sub(scale(tri[2], 2), add(tri[0], tri[1])), 1 / Math.sqrt(6))
+  const n = abs(w1) ** 2 + abs(w2) ** 2
+  if (n === 0) return [0, 0, 1]
+  const c = mul(conj(w1), w2)
+  return [(abs(w1) ** 2 - abs(w2) ** 2) / n, (2 * c[0]) / n, (2 * c[1]) / n]
+}
+
+// DEF as each candidate sees it: relabelled so its i-th vertex is paired with ABC's i-th,
+// and mirrored for a mirror candidate. Ordered as analyse() numbers its candidates.
+export function shapeImages(def, mirror) {
+  const mirrors = mirror ? [false, true] : [false]
+  return mirrors.flatMap((m) => PERMS.map((p) => shapePoint(p.map((j) => (m ? conj(def[j]) : def[j])))))
+}
+
+export const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
