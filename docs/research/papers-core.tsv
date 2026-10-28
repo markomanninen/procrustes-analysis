@@ -1,0 +1,35 @@
+# Core set: about 30 key papers chosen from papers-manifest.tsv (2026-10-28). Fetch with ./fetch-papers.sh papers-core.tsv
+key	filename	source_url	host	license	content_length_bytes	status	content_type
+horn1987closed	horn1987closed.pdf	https://people.csail.mit.edu/bkph/papers/Absolute_Orientation.pdf	people.csail.mit.edu	not stated	1471205	200	application/pdf
+DrydenNotesSTAT718A	DrydenNotesSTAT718A-chap3.pdf	https://people.stat.sc.edu/dryden/STAT718A/notes/shape-chap3.pdf	people.stat.sc.edu	not stated	146533	200	application/pdf
+DrydenNotesSTAT718A	DrydenNotesSTAT718A-chap4.pdf	https://people.stat.sc.edu/dryden/STAT718A/notes/shape-chap4.pdf	people.stat.sc.edu	not stated	89850	200	application/pdf
+DrydenNotesSTAT718A	DrydenNotesSTAT718A-chap5.pdf	https://people.stat.sc.edu/dryden/STAT718A/notes/shape-chap5.pdf	people.stat.sc.edu	not stated	205418	200	application/pdf
+green2006bayesian	green2006bayesian.pdf	https://arxiv.org/pdf/math/0503712	arxiv.org	not stated	330940	200	application/pdf
+myronenko2010point	myronenko2010point.pdf	https://arxiv.org/pdf/0905.2635	arxiv.org	arXiv non-exclusive distribution licence 1.0	6594543	200	application/pdf
+williams2021generalized	williams2021generalized.pdf	https://arxiv.org/pdf/2110.14739	arxiv.org	CC BY 4.0	2434879	200	application/pdf
+smith2017offline	smith2017offline.pdf	https://arxiv.org/pdf/1702.03859	arxiv.org	arXiv non-exclusive distribution licence 1.0	530915	200	application/pdf
+barbour2002relativity	barbour2002relativity.pdf	https://arxiv.org/pdf/gr-qc/0012089	arxiv.org	not stated	343450	200	application/pdf
+barbour2003scale	barbour2003scale.pdf	https://arxiv.org/pdf/gr-qc/0211021	arxiv.org	not stated	331420	200	application/pdf
+barbour2009nature	barbour2009nature.pdf	https://arxiv.org/pdf/0903.3489	arxiv.org	arXiv non-exclusive distribution licence 1.0	139340	200	application/pdf
+barbour2010definition	barbour2010definition.pdf	https://arxiv.org/pdf/1007.3368	arxiv.org	arXiv non-exclusive distribution licence 1.0	246628	200	application/pdf
+barbour2012shape	barbour2012shape.pdf	https://arxiv.org/pdf/1105.0183	arxiv.org	arXiv non-exclusive distribution licence 1.0	557866	200	application/pdf
+mercati2014tutorial	mercati2014tutorial.pdf	https://arxiv.org/pdf/1409.0105	arxiv.org	arXiv non-exclusive distribution licence 1.0	5546386	200	application/pdf
+barbour2024complexity	barbour2024complexity.pdf	https://arxiv.org/pdf/2405.07480	arxiv.org	arXiv non-exclusive distribution licence 1.0	2632668	200	application/pdf
+GGK2011	GGK2011.pdf	https://arxiv.org/pdf/1010.2481	arxiv.org	arXiv non-exclusive distribution licence 1.0	330242	200	application/pdf
+barbour2014identification	barbour2014identification.pdf	https://arxiv.org/pdf/1409.0917	arxiv.org	arXiv non-exclusive distribution licence 1.0	787280	200	application/pdf
+barbour2016janus	barbour2016janus.pdf	https://arxiv.org/pdf/1604.03956	arxiv.org	arXiv non-exclusive distribution licence 1.0	92466	200	application/pdf
+Zeh2016	Zeh2016.pdf	https://arxiv.org/pdf/1601.02790	arxiv.org	arXiv non-exclusive distribution licence 1.0	78443	200	application/pdf
+LazaroviciReichert2020	LazaroviciReichert2020.pdf	https://arxiv.org/pdf/1809.04646	arxiv.org	arXiv non-exclusive distribution licence 1.0	1837977	200	application/pdf
+montgomery2015shape	montgomery2015shape.pdf	https://arxiv.org/pdf/1402.0841	arxiv.org	arXiv non-exclusive distribution licence 1.0	1189169	200	application/pdf
+montgomery1996geometric	montgomery1996geometric.pdf	https://arxiv.org/pdf/dg-ga/9510005	arxiv.org	not stated	199083	200	application/pdf
+anderson2008foundations	anderson2008foundations.pdf	https://arxiv.org/pdf/0706.3934	arxiv.org	arXiv non-exclusive distribution licence 1.0	332598	200	application/pdf
+anderson2015kendall	anderson2015kendall.pdf	https://arxiv.org/pdf/1307.1923	arxiv.org	arXiv non-exclusive distribution licence 1.0	994003	200	application/pdf
+adm1962	adm1962.pdf	https://arxiv.org/pdf/gr-qc/0405109	arxiv.org	not stated	334406	200	application/pdf
+gryb2010definition	gryb2010definition.pdf	https://arxiv.org/pdf/1003.1973	arxiv.org	arXiv non-exclusive distribution licence 1.0	347769	200	application/pdf
+giulini2009	giulini2009.pdf	https://arxiv.org/pdf/0902.3923	arxiv.org	arXiv non-exclusive distribution licence 1.0	440116	200	application/pdf
+carroll1997	carroll1997.pdf	https://arxiv.org/pdf/gr-qc/9712019	arxiv.org	not stated	1583209	200	application/pdf
+groth1986pattern	groth1986pattern.pdf	https://articles.adsabs.harvard.edu/pdf/1986AJ.....91.1244G	articles.adsabs.harvard.edu	not stated	573690	200	application/pdf
+pal2006astrometry	pal2006astrometry.pdf	https://arxiv.org/pdf/astro-ph/0609658	arxiv.org	not stated	301023	200	application/pdf
+kuznetsov2016exceptional	kuznetsov2016exceptional.pdf	https://arxiv.org/pdf/1110.5607	arxiv.org	arXiv non-exclusive distribution licence 1.0	519439	200	application/pdf
+bowden2019least	bowden2019least.pdf	https://arxiv.org/pdf/1708.01559	arxiv.org	arXiv non-exclusive distribution licence 1.0	1721683	200	application/pdf
+bhattacharjee2026rubix	bhattacharjee2026rubix.pdf	https://arxiv.org/pdf/2610.10408	arxiv.org	CC BY 4.0	6138858	200	application/pdf
