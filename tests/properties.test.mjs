@@ -216,3 +216,39 @@ test("'best' recovers a shuffled, turned, noisy copy of many points", () => {
   f.best.perm.forEach((j, i) => assert.equal(order[j], i))
   assert.ok(f.best.rms < 0.05)
 })
+
+test('triangles: the side-length rule picks the best pairing without trying any', async () => {
+  const { trianglePairing } = await import('../js/triangle.js')
+  cases(12, ({ points }, at) => {
+    const [A, D] = [points(3), points(3)]
+    for (const scaling of [false, true]) {
+      const an = analyse(A, D, { mirror: true, scaling })
+      const { perm, mirror } = trianglePairing(A, D)
+      const c = an.all.find((x) => x.mirror === mirror && String(x.perm) === String(perm))
+      assert.ok(c.E - an.best.E <= 1e-9 * (1 + an.best.E), `${at}, scaling ${scaling}`)
+    }
+  })
+})
+
+test('holonomy: carried round a loop of shapes, a triangle turns by minus half the solid angle', async () => {
+  const { transport } = await import('../js/procrustes.js')
+  const { solidAngle } = await import('../js/triangle.js')
+  cases(13, ({ k, between }, at) => {
+    if (k >= 20) return // each case carries 1500 frames
+    const [cx, cy, R, B] = [between(-0.5, 0.5), between(0.5, 1.5), between(0.1, 1.4), between(0.5, 2)]
+    const N = 1500
+    const dir = between(0, 1) < 0.5 ? 1 : -1
+    const frames = Array.from({ length: N + 1 }, (_, i) => {
+      const t = (dir * 2 * Math.PI * i) / N
+      return [[-B, 0], [B, 0], [cx + R * Math.cos(t), cy + R * Math.sin(t)]]
+    })
+    const carried = transport(frames)
+    const [first, last] = [carried[0], carried[N]]
+    const turn = Math.atan2(...[1, 0].map((k) => first.reduce((s, p, i) => s + mul(conj(p), last[i])[k], 0)))
+    const omega = solidAngle(frames.slice(0, N).map(shapePoint))
+    const diff = Math.atan2(Math.sin(turn + omega / 2), Math.cos(turn + omega / 2))
+    assert.ok(Math.abs(diff) < 1e-4, `${at}: turn ${turn}, −Ω/2 ${-omega / 2}`)
+    // and the carried frames keep their shapes (distance takes a square root of rounding)
+    assert.ok(distance(last, frames[N]) < 1e-6, at)
+  })
+})

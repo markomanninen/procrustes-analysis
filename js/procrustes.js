@@ -197,6 +197,19 @@ export function fit(target, source, { pairings = 'identity', mirror = false, sca
   return { K, J, z, u, all, best, points }
 }
 
+// Best matching along a sequence: each frame is turned (and, with `scaling`, sized) onto
+// the one before it as already placed, with the same labels and no mirror, so no step turns
+// the whole relative to its predecessor. Returns the frames so placed, centred. When the
+// shapes come back to the start, the frames need not: for triangles the last is turned
+// from the first by minus half the solid angle the loop encloses on the shape sphere
+// (triangle.js, solidAngle). This is Barbour's best matching, and the turning is holonomy.
+export function transport(frames, { scaling = false } = {}) {
+  if (!frames.length) return []
+  const out = [centre(frames[0])]
+  for (let i = 1; i < frames.length; i++) out.push(fit(out[i - 1], frames[i], { scaling }).points)
+  return out
+}
+
 // The full Procrustes distance between two shapes, √(1 − |⟨z, u⟩|² / (‖z‖²‖u‖²)): the sine
 // of the angle between them on the preshape sphere, free of position, turn and size. It is
 // 0 for similar shapes and 1 at most. With `mirror`, a mirror image counts as the same shape.

@@ -52,6 +52,9 @@ header p { margin: 0; color: var(--muted); max-width: 72ch; }
 #board { display: block; width: 100%; height: min(68vh, 620px); min-height: 360px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; touch-action: none; cursor: grab; }
 #board:active { cursor: grabbing; }
 #sphere { display: block; width: 100%; height: 340px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
+#loop { display: block; width: 100%; height: 300px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
+.loop-controls { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: end; }
+.loop-controls .row { min-width: 220px; }
 #history { display: block; width: 100%; height: 170px; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; }
 aside { display: grid; gap: 18px; }
 fieldset { border: 0; border-top: 1px solid var(--rule); margin: 0; padding: 12px 0 0; display: grid; gap: 10px; }
@@ -181,6 +184,20 @@ code { font: 13px var(--mono); }
     <p class="note">As in the file. Each sum is turned into θ = atan(y/x) and the one with the smallest |θ| is used. Two things differ from least squares. atan forgets whether s points left or right, so when Re s &lt; 0 the turn is half a turn off. And the smallest turn is not the best fit. The sixth sum pairs u₁ twice, where u₂ was meant.</p>
   </section>
 
+  <section aria-labelledby="h-loop">
+    <h2 id="h-loop">Carried round a loop, the triangle turns</h2>
+    <canvas id="loop" aria-label="Left: a triangle whose vertex C circles a loop. Right: the same triangle best matched step by step, beside its starting position."></canvas>
+    <div class="loop-controls">
+      <div class="row"><span><label for="loop-size">Size of C’s loop</label><output id="out-loop-size"></output></span><input id="loop-size" type="range" min="0.1" max="1.4" step="0.05" value="0.8"></div>
+      <div class="buttons"><button id="loop-play" type="button">Carry it round</button></div>
+      <dl>
+        <dt>turn after the loop, Δθ</dt><dd id="loop-turn"></dd>
+        <dt>−Ω/2, from the loop on the shape sphere</dt><dd id="loop-omega"></dd>
+      </dl>
+    </div>
+    <p class="note">Each step turns the carried triangle onto the one before it, the best match, so no step turns it as a whole. Still, when C has gone round and the shape is back, the triangle has turned. The turn is minus half the solid angle Ω that the loop of shapes encloses on the sphere above, counterclockwise counted positive. This is holonomy, the effect that lets a falling cat land on its feet, and it is what best matching in Barbour’s shape dynamics produces.</p>
+  </section>
+
   <section aria-labelledby="h-jump">
     <h2 id="h-jump">Why triangles jump, and what stops it</h2>
     <div class="causes">
@@ -203,5 +220,6 @@ code { font: 13px var(--mono); }
   </section>
 </div>
 <script type="module" src="js/app.js"></script>
+<script type="module" src="js/loop-view.js"></script>
 </body>
 </html>

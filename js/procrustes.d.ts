@@ -66,5 +66,8 @@ export function polygonPairings(z: Point[], u: Point[]): Pairing[]
 export function fit(target: Point[], source: Point[], opts?: FitOptions): Fit
 export function distance(a: Point[], b: Point[], opts?: { mirror?: boolean; pairing?: Pairing }): number
 
+/** Each frame turned (and sized) onto the previous one as placed: best matching along a sequence. */
+export function transport(frames: Point[][], opts?: { scaling?: boolean }): Point[][]
+
 export function relativeMap(from: SimilarityMap, to: SimilarityMap): SimilarityMap
 export function mapAt(map: SimilarityMap, t: number, w: Complex): Complex

@@ -36,4 +36,8 @@ export function withHysteresis<C extends Candidate>(an: { all: C[]; best: C }, c
 export function shapePoint(tri: Point[]): Vec3
 export function shapeImages(def: Point[], mirror: boolean): Vec3[]
 export function dot3(a: Vec3, b: Vec3): number
+/** The best pairing with mirror images allowed, by the order of the side lengths: no candidates tried. */
+export function trianglePairing(abc: Point[], def: Point[]): { perm: Pairing; mirror: boolean }
+/** Signed solid angle enclosed by a closed loop on the unit sphere, counterclockwise from outside positive. */
+export function solidAngle(loop: Vec3[]): number
 export function softFit(an: TriangleAnalysis, sigma: number): { pts: Point[]; weights: number[] }

@@ -54,6 +54,10 @@ assignments rather than 100! orderings. This is the permutation polygon of Bhatt
 Campbell and Shome, *Rubix* (arXiv 2610.10408, 2026). The tests check it against every
 ordering for n ≤ 8.
 
+`transport(frames)` best-matches a sequence step by step: each frame turned onto the one
+before as placed. Round a closed loop of shapes the frames still turn, which is holonomy
+([docs/reflections.md](docs/reflections.md) §6).
+
 `relativeMap` and `mapAt` give a continuous path from one fit to another, drawing a mirror
 fit as a half turn in space, for animation.
 
@@ -65,6 +69,8 @@ import { analyse, shapePoint, softFit } from 'procrustes-analysis/triangle'
 const an = analyse(abc, def, { mirror: true }) // all twelve pairings, and GeoGebra's six sums
 shapePoint(abc)                               // the triangle on Kendall's shape sphere
 softFit(an, 0.5)                              // every pairing weighted, so the fit never jumps
+trianglePairing(abc, def)                     // the best pairing by side lengths, no candidates tried
+solidAngle(loop)                              // a carried triangle turns by −solidAngle/2
 ```
 
 ## Command line

@@ -65,3 +65,22 @@ test('the soft fit shows its weights', async ({ page }) => {
   await page.locator('#sigma').fill('1')
   await expect(page.locator('#weights')).toContainText('%')
 })
+
+test('carried round a loop, the triangle turns by minus half the solid angle', async ({ page }) => {
+  const deg = async (id) => Number((await page.locator(id).textContent()).replace('°', ''))
+  for (const size of ['0.3', '0.8', '1.3']) {
+    await page.locator('#loop-size').fill(size)
+    await expect(page.locator('#out-loop-size')).toHaveText(Number(size).toFixed(2))
+    const [turn, half] = [await deg('#loop-turn'), await deg('#loop-omega')]
+    expect(Math.abs(turn - half)).toBeLessThan(0.05)
+    expect(Math.abs(turn)).toBeGreaterThan(1)
+  }
+  await page.click('#loop-play')
+  const inked = await page.locator('#loop').evaluate((c) => {
+    const { data } = c.getContext('2d').getImageData(0, 0, c.width, c.height)
+    let n = 0
+    for (let i = 3; i < data.length; i += 4) if (data[i] > 0) n++
+    return n
+  })
+  expect(inked).toBeGreaterThan(500)
+})
