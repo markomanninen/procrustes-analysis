@@ -93,6 +93,79 @@ export function cyclicPairings(n, { reverse = true } = {}) {
   return [...forward, ...backward]
 }
 
+// Least-cost assignment of rows to columns of a square matrix (Hungarian method, O(n³)):
+// assign[i] is the column given to row i.
+function assignment(cost) {
+  const n = cost.length
+  const u = new Array(n + 1).fill(0)
+  const v = new Array(n + 1).fill(0)
+  const owner = new Array(n + 1).fill(0)
+  const way = new Array(n + 1).fill(0)
+  for (let i = 1; i <= n; i++) {
+    owner[0] = i
+    let j0 = 0
+    const minv = new Array(n + 1).fill(Infinity)
+    const used = new Array(n + 1).fill(false)
+    do {
+      used[j0] = true
+      const i0 = owner[j0]
+      let delta = Infinity
+      let j1 = 0
+      for (let j = 1; j <= n; j++) {
+        if (used[j]) continue
+        const cur = cost[i0 - 1][j - 1] - u[i0] - v[j]
+        if (cur < minv[j]) { minv[j] = cur; way[j] = j0 }
+        if (minv[j] < delta) { delta = minv[j]; j1 = j }
+      }
+      for (let j = 0; j <= n; j++) {
+        if (used[j]) { u[owner[j]] += delta; v[j] -= delta } else minv[j] -= delta
+      }
+      j0 = j1
+    } while (owner[j0] !== 0)
+    do { const j1 = way[j0]; owner[j0] = owner[j1]; j0 = j1 } while (j0)
+  }
+  const assign = new Array(n)
+  for (let j = 1; j <= n; j++) assign[owner[j] - 1] = j - 1
+  return assign
+}
+
+// The pairings that can be best, for any n. Each pairing π gives one point s_π = Σ z̄_i u_π(i)
+// of the plane, and the best fit is the s_π farthest from the origin, which is a vertex of
+// their convex hull, the permutation polygon. The vertex furthest in a direction d is the
+// pairing that maximises Re(d̄·s_π), a linear assignment, so the vertices are found one
+// support query at a time. There are at most n(n−1) of them. This is the construction of
+// Bhattacharjee, Campbell and Shome, "Rubix" (arXiv 2610.10408, 2026).
+export function polygonPairings(z, u) {
+  const n = z.length
+  const w = z.map((zi) => u.map((uj) => mul(conj(zi), uj)))
+  const sOf = (perm) => perm.reduce((s, j, i) => add(s, w[i][j]), [0, 0])
+  const support = (d) => {
+    const perm = assignment(w.map((row) => row.map((x) => -(d[0] * x[0] + d[1] * x[1]))))
+    return { perm, s: sOf(perm) }
+  }
+  const size = Math.sqrt(z.reduce((t, p) => t + abs(p) ** 2, 0) * u.reduce((t, p) => t + abs(p) ** 2, 0))
+  const reach = (d, s) => d[0] * s[0] + d[1] * s[1]
+  // Three supporting vertices, then between each neighbouring pair the vertex furthest out
+  // along the outward normal of the edge joining them, until no edge has one beyond it.
+  const start = [0, 1, 2].map((k) => support(expi((2 * Math.PI * k) / 3)))
+  const found = [...start]
+  const edges = start.map((a, k) => [a, start[(k + 1) % 3]])
+  while (edges.length) {
+    const [a, b] = edges.pop()
+    const e = sub(b.s, a.s)
+    if (abs(e) <= 1e-12 * size) continue
+    const d = [e[1], -e[0]]
+    const c = support(d)
+    if (reach(d, c.s) - reach(d, a.s) > 1e-12 * abs(e) * size) {
+      found.push(c)
+      edges.push([a, c], [c, b])
+    }
+  }
+  const out = []
+  for (const v of found) if (!out.some((o) => abs(sub(o.s, v.s)) <= 1e-9 * (1 + size))) out.push(v)
+  return out.map((v) => v.perm)
+}
+
 const PAIRINGS = {
   identity: (n) => [[...Array(n).keys()]],
   cyclic: (n) => cyclicPairings(n),
@@ -101,19 +174,23 @@ const PAIRINGS = {
 
 // Fits `source` onto `target`, n points each, over the given pairings and, with `mirror`,
 // their mirror images. `pairings` is 'identity' (the default: point i goes with point i),
-// 'cyclic', 'all' or an array of pairings. Returns the candidates, the best one and the
-// fitted source points in target order.
+// 'cyclic', 'all' (every ordering, n ≤ 8), 'best' (any n: only the pairings that can be
+// best, the vertices of the permutation polygon) or an array of pairings. Returns the
+// candidates, the best one and the fitted source points in target order.
 export function fit(target, source, { pairings = 'identity', mirror = false, scaling = false } = {}) {
   if (target.length !== source.length) throw new RangeError('target and source need the same number of points')
   if (target.length < 2) throw new RangeError('at least two points are needed')
-  const list = typeof pairings === 'string' ? PAIRINGS[pairings]?.(target.length) : pairings
-  if (!list) throw new RangeError(`unknown pairings '${pairings}'`)
+  if (typeof pairings === 'string' && !(pairings in PAIRINGS) && pairings !== 'best') throw new RangeError(`unknown pairings '${pairings}'`)
   const K = centroid(target)
   const J = centroid(source)
   const z = centre(target)
   const u = centre(source)
+  const listFor = (m) => {
+    if (pairings === 'best') return polygonPairings(z, m ? u.map(conj) : u)
+    return typeof pairings === 'string' ? PAIRINGS[pairings](target.length) : pairings
+  }
   const mirrors = mirror ? [false, true] : [false]
-  const all = mirrors.flatMap((m) => list.map((p) => candidate(z, u, p, { mirror: m, scaling })))
+  const all = mirrors.flatMap((m) => listFor(m).map((p) => candidate(z, u, p, { mirror: m, scaling })))
   all.forEach((c, i) => (c.id = i))
   const best = all.reduce((a, b) => (b.E < a.E ? b : a))
   const points = best.perm.map((j) => add(K, applyMap(best.map, u[j])))

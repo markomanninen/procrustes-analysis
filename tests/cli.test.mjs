@@ -43,6 +43,14 @@ test('points come from files, {"points": …} objects and standard input', () =>
   assert.deepEqual(json(r), { distance: 0 })
 })
 
+test('fit --pairings best matches points given in any order', () => {
+  const target = [[0, 0], [4, 0], [5, 2], [1, 3], [2, 5]]
+  const source = [target[3], target[0], target[4], target[1], target[2]].map(([x, y]) => [-y + 9, x])
+  const f = json(run(['fit', JSON.stringify(target), JSON.stringify(source), '--pairings', 'best']))
+  assert.equal(f.rms, 0)
+  assert.deepEqual(f.pairing, [1, 3, 4, 0, 2])
+})
+
 test('bad input exits 1, bad usage exits 2, and both say why', () => {
   const tri = '[[0,0],[1,0],[0,1]]'
   const cases = [

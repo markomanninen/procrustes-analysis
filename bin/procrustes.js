@@ -6,7 +6,7 @@ import { parseArgs } from 'node:util'
 import { fit, distance, add, sub, mul, conj, arg, abs } from '../js/procrustes.js'
 
 const USAGE = `Usage:
-  procrustes fit <target> <source> [--pairings identity|cyclic|all] [--mirror] [--scaling]
+  procrustes fit <target> <source> [--pairings identity|cyclic|all|best] [--mirror] [--scaling]
   procrustes distance <a> <b> [--mirror]
 
 <target>, <source>, <a>, <b> are JSON files holding [[x, y], …] or {"points": [[x, y], …]},
@@ -65,7 +65,7 @@ export function run(argv, { stdin = () => readFileSync(0, 'utf8') } = {}) {
   try {
     if (!['fit', 'distance'].includes(cmd)) throw new UsageError(`unknown command '${cmd}'`)
     if (files.length !== 2) throw new UsageError(`${cmd} takes two point sets, got ${files.length}`)
-    if (!['identity', 'cyclic', 'all'].includes(o.pairings)) throw new UsageError(`--pairings must be identity, cyclic or all, not '${o.pairings}'`)
+    if (!['identity', 'cyclic', 'all', 'best'].includes(o.pairings)) throw new UsageError(`--pairings must be identity, cyclic, all or best, not '${o.pairings}'`)
     if (cmd === 'distance' && (o.scaling || o.pairings !== 'identity')) throw new UsageError('distance takes only --mirror')
     if (files.filter((f) => f === '-').length > 1) throw new UsageError('only one point set can come from standard input')
     const [a, b] = files.map((f, i) => readPoints(f, ['first', 'second'][i], stdin))

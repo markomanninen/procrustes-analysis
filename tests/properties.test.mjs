@@ -186,3 +186,33 @@ test('degenerate input: two points, collinear points, a collapsed source', () =>
   assert.ok(Math.abs(collapsed.best.E - sumsq(centre(line))) < 1e-12)
   collapsed.points.forEach((p) => assert.ok(abs(sub(p, [2, 0])) < 1e-12))
 })
+
+test("'best' finds the same best pairing as trying every ordering, for any shapes", () => {
+  cases(10, ({ int, points, between }, at) => {
+    const n = int(2, 7)
+    const A = points(n)
+    const kind = int(0, 2)
+    // a noisy relabelled copy, a symmetric regular polygon (many ties), or unrelated points
+    const B = kind === 0
+      ? [...similarity(A, expi(between(-3, 3)), [4, -2], false).map((p) => add(p, [between(-0.3, 0.3), between(-0.3, 0.3)]))].sort(() => between(-1, 1))
+      : kind === 1 ? Array.from({ length: n }, (_, i) => expi((2 * Math.PI * i) / n)) : points(n)
+    for (const mirror of [false, true]) for (const scaling of [false, true]) {
+      const all = fit(A, B, { pairings: 'all', mirror, scaling }).best.E
+      const f = fit(A, B, { pairings: 'best', mirror, scaling })
+      assert.ok(Math.abs(f.best.E - all) <= 1e-9 * (1 + all), `${at}, kind ${kind}, mirror ${mirror}, scaling ${scaling}`)
+      assert.ok(f.all.length <= (mirror ? 2 : 1) * Math.max(1, n * (n - 1)), `${at}: ${f.all.length} vertices`)
+    }
+  })
+})
+
+test("'best' recovers a shuffled, turned, noisy copy of many points", () => {
+  const r = rng(SEED + 11)
+  const n = 40
+  const A = Array.from({ length: n }, () => [20 * r() - 10, 20 * r() - 10])
+  const order = [...Array(n).keys()].sort(() => r() - 0.5)
+  const B = order.map((i) => add(mul(expi(2.2), A[i]), [30 + 0.05 * r(), -5 + 0.05 * r()]))
+  const f = fit(A, B, { pairings: 'best' })
+  // target point i is paired with the source point that came from it
+  f.best.perm.forEach((j, i) => assert.equal(order[j], i))
+  assert.ok(f.best.rms < 0.05)
+})

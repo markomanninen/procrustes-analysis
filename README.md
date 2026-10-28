@@ -34,7 +34,8 @@ The library has no dependencies and no DOM. Points are `[x, y]` pairs.
 import { fit, distance } from 'procrustes-analysis'
 
 const f = fit(target, source, {
-  pairings: 'identity', // or 'cyclic' (closed polygons), 'all' (n ≤ 8), or an array of pairings
+  pairings: 'identity', // or 'cyclic' (closed polygons), 'all' (every ordering, n ≤ 8),
+                        // 'best' (the best ordering, any n), or an array of pairings
   mirror: false,        // also try the mirror image of source
   scaling: false,       // also fit the size
 })
@@ -44,6 +45,14 @@ f.points       // the fitted source points, in target order
 
 distance(a, b, { mirror: true }) // full Procrustes distance, 0 … 1, free of position, turn and size
 ```
+
+With `pairings: 'best'` the points may come in any order and in any number. Each ordering π
+gives one point s_π = Σ z̄ᵢ u_π(i) in the plane, and the best fit is the one farthest from the
+origin, a vertex of their convex hull. The hull has at most n(n−1) vertices, and each is
+found by one linear assignment (the Hungarian method), so 100 points take about a thousand
+assignments rather than 100! orderings. This is the permutation polygon of Bhattacharjee,
+Campbell and Shome, *Rubix* (arXiv 2610.10408, 2026). The tests check it against every
+ordering for n ≤ 8.
 
 `relativeMap` and `mapAt` give a continuous path from one fit to another, drawing a mirror
 fit as a half turn in space, for animation.

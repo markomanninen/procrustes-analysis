@@ -23,7 +23,8 @@ export interface Candidate {
 }
 
 export interface FitOptions {
-  pairings?: 'identity' | 'cyclic' | 'all' | Pairing[]
+  /** 'all' lists every ordering (n ≤ 8); 'best' finds the best for any n. */
+  pairings?: 'identity' | 'cyclic' | 'all' | 'best' | Pairing[]
   mirror?: boolean
   scaling?: boolean
 }
@@ -60,6 +61,8 @@ export function candidate(z: Point[], u: Point[], perm: Pairing, opts?: { mirror
 
 export function permutations(n: number): Pairing[]
 export function cyclicPairings(n: number, opts?: { reverse?: boolean }): Pairing[]
+/** The pairings at the vertices of the permutation polygon of centred z and u: the only ones that can be best. */
+export function polygonPairings(z: Point[], u: Point[]): Pairing[]
 export function fit(target: Point[], source: Point[], opts?: FitOptions): Fit
 export function distance(a: Point[], b: Point[], opts?: { mirror?: boolean; pairing?: Pairing }): number
 
