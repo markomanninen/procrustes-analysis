@@ -431,7 +431,7 @@ function tables(an) {
   $('gap').className = gap < 0.1 ? 'warn' : ''
   $('rms').textContent = state.chosen.rms.toFixed(3)
   $('turn').textContent = state.chosen.mirror ? `mirror about ${deg(Q.arg(state.chosen.map.a) / 2).toFixed(1)}°` : `${deg(state.chosen.phi).toFixed(2)}°`
-  $('scale').textContent = state.chosen.rho.toFixed(3)
+  $('scale').textContent = state.chosen.beta.toFixed(3)
   $('switches').textContent = state.switches || 0
 }
 

@@ -1,0 +1,40 @@
+# Library and command: unit, property, command-line and package tests with a coverage floor,
+# and the published types. Runs only when code, tests or dependencies change; edits to docs,
+# the README or the page alone start nothing here.
+name: test
+
+on:
+  push:
+    branches: [main]
+    paths: &code
+      - 'js/procrustes.js'
+      - 'js/procrustes.d.ts'
+      - 'bin/**'
+      - 'tests/*.test.mjs'
+      - 'tests/types/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/test.yml'
+  pull_request:
+    paths: *code
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:coverage
+      - run: npm run test:types

@@ -191,3 +191,30 @@ test('across a tie the soft fit moves in small steps while the hard fit leaps', 
   assert.ok(step(hardFit) > 1, `hard ${step(hardFit)}`)
   assert.ok(step(soft) < 0.15, `soft ${step(soft)}`)
 })
+
+test('the fitted triangle jumps when ABC crosses an isosceles or flat shape, not when DEF does', () => {
+  const A0 = [[0, 0], [4, 1], [1, 3]]
+  const D0 = [[10, 0], [11, 5], [18, 1]]
+  const fitted = (A, D) => {
+    const an = analyse(A, D, { mirror: true })
+    return placed(an, an.best.map)
+  }
+  // the largest move of the fitted triangle as a set of points, between neighbouring frames
+  const setStep = (frames) => {
+    let worst = 0
+    for (let i = 1; i < frames.length; i++) {
+      const [P, R] = [fitted(...frames[i - 1]), fitted(...frames[i])]
+      const best = Math.min(...[[0, 1, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0], [1, 0, 2], [0, 2, 1]]
+        .map((pm) => Math.max(...pm.map((j, k) => abs(sub(P[k], R[j]))))))
+      worst = Math.max(worst, best)
+    }
+    return worst
+  }
+  const sweep = (make) => Array.from({ length: 401 }, (_, i) => make(i / 400))
+  const isosceles = (t) => [[-2, 0], [2, 0], [-0.5 + t, 3]]
+  const flat = (t) => [[0, 0], [4, 0], [1.5, -0.5 + t]]
+  for (const shape of [isosceles, flat]) {
+    assert.ok(setStep(sweep((t) => [shape(t), D0])) > 1)
+    assert.ok(setStep(sweep((t) => [A0, shape(t)])) < 0.01)
+  }
+})

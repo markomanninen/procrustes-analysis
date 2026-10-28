@@ -1,9 +1,46 @@
 {
   "name": "procrustes-analysis",
-  "private": true,
+  "version": "0.1.0",
+  "description": "Procrustes fitting of point sets with complex numbers: rotation, scaling, reflections, pairings and the triangle shape sphere",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./js/procrustes.d.ts",
+      "default": "./js/procrustes.js"
+    }
+  },
+  "types": "./js/procrustes.d.ts",
+  "bin": {
+    "procrustes": "bin/procrustes.js"
+  },
+  "files": [
+    "js/procrustes.js",
+    "js/procrustes.d.ts",
+    "bin/procrustes.js"
+  ],
+  "keywords": [
+    "procrustes",
+    "shape analysis",
+    "kendall",
+    "shape sphere",
+    "best matching",
+    "complex numbers"
+  ],
+  "author": "Marko Manninen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/markomanninen/procrustes-analysis.git"
+  },
   "scripts": {
-    "test": "node --test tests/",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=js/procrustes.js --test-coverage-include=bin/procrustes.js --test-coverage-lines=98 --test-coverage-branches=90 --test-coverage-functions=95 \"tests/*.test.mjs\"",
+    "test:types": "tsc -p tests/types",
+    "test:e2e": "playwright test",
     "serve": "python3 -m http.server 8138"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "typescript": "^7.0.2"
   }
 }

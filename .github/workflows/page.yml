@@ -1,0 +1,43 @@
+# The page in a real browser. Runs only when the page, the library it draws from or these
+# tests change; a browser install costs far more than the tests themselves.
+name: page
+
+on:
+  push:
+    branches: [main]
+    paths: &page
+      - 'index.html'
+      - 'js/**'
+      - 'tests/e2e/**'
+      - 'playwright.config.js'
+      - 'package-lock.json'
+      - '.github/workflows/page.yml'
+  pull_request:
+    paths: *page
+
+concurrency:
+  group: page-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npm run test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
