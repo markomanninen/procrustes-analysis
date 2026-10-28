@@ -40,7 +40,7 @@ test('the page shows the error the library computes, with and without mirror ima
   await page.selectOption('#preset', 'mirror')
   // the preset is a mirror image of ABC with a little noise added to each vertex
   const expected = await page.evaluate(async () => {
-    const Q = await import('/js/procrustes.js')
+    const Q = { ...(await import('/js/procrustes.js')), ...(await import('/js/triangle.js')) }
     const BASE = [[-14.9845, 12.5254], [-11.0133, 3.7193], [-8.158, 4.4858]]
     const D = BASE.map(Q.conj).map((p) => Q.add(Q.mul(p, Q.expi(0.9)), [26, 12])).map((p, i) => Q.add(p, [[0.4, -0.2], [-0.3, 0.3], [0.2, 0.1]][i]))
     return [true, false].map((mirror) => Q.analyse(BASE, D, { mirror }).best.rms.toFixed(3))

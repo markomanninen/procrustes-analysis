@@ -19,9 +19,6 @@ export interface Candidate {
   /** Sum of squared residuals. */
   E: number
   rms: number
-  /** GeoGebra's angle atan(Im s / Re s). */
-  thetaAtan: number
-  rmsAtan: number
   map: SimilarityMap
 }
 
@@ -44,17 +41,6 @@ export interface Fit {
   points: Point[]
 }
 
-export interface TriangleAnalysis {
-  K: Point
-  J: Point
-  z: Point[]
-  u: Point[]
-  all: Candidate[]
-  best: Candidate
-  ggb: Candidate[]
-  ggbPick: Candidate
-}
-
 export function add(a: Complex, b: Complex): Complex
 export function sub(a: Complex, b: Complex): Complex
 export function mul(a: Complex, b: Complex): Complex
@@ -68,12 +54,8 @@ export function wrap(t: number): number
 export function centroid(pts: Point[]): Point
 export function centre(pts: Point[]): Point[]
 
-export const PERMS: Pairing[]
-export const GGB_PERMS: Pairing[]
-export const LETTERS: string[]
-export function pairing(perm: Pairing): string
-
 export function applyMap(map: SimilarityMap, w: Complex): Complex
+export function residual(z: Point[], u: Point[], perm: Pairing, map: SimilarityMap): number
 export function candidate(z: Point[], u: Point[], perm: Pairing, opts?: { mirror?: boolean; scaling?: boolean }): Candidate
 
 export function permutations(n: number): Pairing[]
@@ -81,15 +63,5 @@ export function cyclicPairings(n: number, opts?: { reverse?: boolean }): Pairing
 export function fit(target: Point[], source: Point[], opts?: FitOptions): Fit
 export function distance(a: Point[], b: Point[], opts?: { mirror?: boolean; pairing?: Pairing }): number
 
-export function analyse(abc: Point[], def: Point[], opts?: { mirror?: boolean; scaling?: boolean }): TriangleAnalysis
-export function placed(an: { K: Point; u: Point[] }, map: SimilarityMap): Point[]
-export function ggbPlaced(an: TriangleAnalysis): Point[]
 export function relativeMap(from: SimilarityMap, to: SimilarityMap): SimilarityMap
 export function mapAt(map: SimilarityMap, t: number, w: Complex): Complex
-export function withHysteresis(an: { all: Candidate[]; best: Candidate }, currentId: number, margin: number): Candidate
-
-export type Vec3 = [number, number, number]
-export function shapePoint(tri: Point[]): Vec3
-export function shapeImages(def: Point[], mirror: boolean): Vec3[]
-export function dot3(a: Vec3, b: Vec3): number
-export function softFit(an: TriangleAnalysis, sigma: number): { pts: Point[]; weights: number[] }

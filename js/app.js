@@ -1,4 +1,7 @@
-import * as Q from './procrustes.js'
+import * as P from './procrustes.js'
+import * as T from './triangle.js'
+
+const Q = { ...P, ...T }
 
 const $ = (id) => document.getElementById(id)
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()

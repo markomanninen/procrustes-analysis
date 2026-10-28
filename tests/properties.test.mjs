@@ -2,10 +2,8 @@
 // failure is repeatable. Each test states the seed and case it failed on.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  fit, distance, analyse, shapePoint, shapeImages, dot3, softFit, mapAt, applyMap, relativeMap,
-  centre, add, sub, mul, conj, expi, abs, scale,
-} from '../js/procrustes.js'
+import { fit, distance, mapAt, applyMap, relativeMap, centre, add, sub, mul, conj, expi, abs, scale } from '../js/procrustes.js'
+import { analyse, shapePoint, shapeImages, dot3, softFit } from '../js/triangle.js'
 
 const SEED = 20261028
 const CASES = 300

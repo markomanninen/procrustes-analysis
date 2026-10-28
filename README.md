@@ -28,7 +28,7 @@ around reflections, and how the page animates them without jumping.
 
 ## Library
 
-`js/procrustes.js` has no dependencies and no DOM. Points are `[x, y]` pairs.
+The library has no dependencies and no DOM. Points are `[x, y]` pairs.
 
 ```js
 import { fit, distance } from 'procrustes-analysis'
@@ -45,8 +45,18 @@ f.points       // the fitted source points, in target order
 distance(a, b, { mirror: true }) // full Procrustes distance, 0 … 1, free of position, turn and size
 ```
 
-The triangle functions (`analyse`, `shapePoint`, `softFit`, …) are the special case n = 3
-that the page uses.
+`relativeMap` and `mapAt` give a continuous path from one fit to another, drawing a mirror
+fit as a half turn in space, for animation.
+
+The triangle in detail, as the page uses it, is a separate entry point:
+
+```js
+import { analyse, shapePoint, softFit } from 'procrustes-analysis/triangle'
+
+const an = analyse(abc, def, { mirror: true }) // all twelve pairings, and GeoGebra's six sums
+shapePoint(abc)                               // the triangle on Kendall's shape sphere
+softFit(an, 0.5)                              // every pairing weighted, so the fit never jumps
+```
 
 ## Command line
 
@@ -86,8 +96,9 @@ the library changes.
 
 | | |
 |---|---|
-| `js/procrustes.js` | complex arithmetic, fitting n points, the 12 triangle candidates, the GeoGebra rule, paths for animation; no DOM |
-| `js/procrustes.d.ts` | types |
+| `js/procrustes.js` | complex arithmetic, fitting n points, distance, pairings, paths for animation; no DOM |
+| `js/triangle.js` | the 12 triangle candidates, the GeoGebra rule, the shape sphere, the soft fit, hysteresis |
+| `js/*.d.ts` | types |
 | `bin/procrustes.js` | the command line |
 | `js/app.js` | the page |
 | `index.html` | layout and styles |

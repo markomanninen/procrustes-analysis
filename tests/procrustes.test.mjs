@@ -1,9 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  analyse, placed, ggbPlaced, mapAt, relativeMap, applyMap, add, sub, mul, conj, expi, abs,
-  candidate, centre, GGB_PERMS, withHysteresis,
-} from '../js/procrustes.js'
+import { mapAt, relativeMap, applyMap, add, sub, mul, conj, expi, abs, candidate, centre } from '../js/procrustes.js'
+import { analyse, placed, ggbPlaced, GGB_PERMS, withHysteresis, shapePoint, shapeImages, dot3, softFit } from '../js/triangle.js'
 
 // The GeoGebra file's starting triangles.
 const ABC = [[-14.9845, 12.5254], [-11.0133, 3.7193], [-8.158, 4.4858]]
@@ -114,7 +112,6 @@ test('hysteresis keeps the current pairing near a tie', () => {
 })
 
 test('on the shape sphere |s|² is (1 + n·m)/2 of the norms, for every pairing', async () => {
-  const { shapePoint, shapeImages, dot3 } = await import('../js/procrustes.js')
   const z = centre(ABC)
   const u = centre(DEF)
   const norm2 = (p) => p.reduce((t, q) => t + abs(q) ** 2, 0)
@@ -126,7 +123,6 @@ test('on the shape sphere |s|² is (1 + n·m)/2 of the norms, for every pairing'
 })
 
 test('the best pairing is the image of DEF nearest to ABC on the sphere', async () => {
-  const { shapePoint, shapeImages, dot3 } = await import('../js/procrustes.js')
   const n = shapePoint(ABC)
   for (const opts of [{ mirror: false }, { mirror: true }, { mirror: true, scaling: true }]) {
     const an = analyse(ABC, DEF, opts)
@@ -136,7 +132,6 @@ test('the best pairing is the image of DEF nearest to ABC on the sphere', async 
 })
 
 test('relabelling turns the sphere, mirroring reflects it through the equator', async () => {
-  const { shapePoint } = await import('../js/procrustes.js')
   const [x, y, h] = shapePoint(DEF)
   const cyc = shapePoint([DEF[1], DEF[2], DEF[0]])
   const turn = Math.atan2(cyc[1], cyc[0]) - Math.atan2(y, x)
@@ -170,14 +165,12 @@ test('without mirror images an isosceles ABC is no tie: the edges then move with
 })
 
 test('the soft fit becomes the hard fit as σ goes to zero', async () => {
-  const { softFit } = await import('../js/procrustes.js')
   const an = analyse(ABC, DEF, { mirror: true })
   const hard = placed(an, an.best.map)
   softFit(an, 1e-3).pts.forEach((p, i) => assert.ok(close(p, hard[an.best.perm[i]], 1e-9)))
 })
 
 test('across a tie the soft fit moves in small steps while the hard fit leaps', async () => {
-  const { softFit } = await import('../js/procrustes.js')
   // move C across the isosceles shape (apex C on the perpendicular bisector of AB)
   const frames = Array.from({ length: 201 }, (_, i) => [[-2, 0], [2, 0], [-0.5 + i / 200, 3]])
   const D = [[10, 0], [11, 5], [18, 1]]

@@ -1,0 +1,98 @@
+// One triangle onto another in detail: all twelve pairings, the GeoGebra construction's rule
+// beside least squares, Kendall's shape sphere, a soft fit and hysteresis for animation.
+// ABC are the targets z, DEF are fitted, u.
+import { add, sub, mul, conj, scale, abs, expi, applyMap, candidate, residual, fit, cyclicPairings } from './procrustes.js'
+
+// Which vertex of DEF each of A, B, C is paired with: perm[i] indexes D, E, F.
+// The three cyclic orders keep the direction of travel, the three others reverse it.
+export const PERMS = cyclicPairings(3)
+
+// The six sums of the GeoGebra construction, s_1 … s_6, as written there. The sixth repeats
+// u₁ (v₁u₁ + v₂u₃ + v₃u₁); the intended pairing is [0, 2, 1].
+export const GGB_PERMS = [[0, 1, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0], [1, 0, 2], [0, 2, 0]]
+
+// GeoGebra turns by θ = atan(y/x) of s, which is −arg s only when Re s > 0 and half a turn
+// off otherwise. Adds that angle and the error it gives to a candidate.
+function withAtan(c, z, u) {
+  const [x, y] = c.s
+  const thetaAtan = x === 0 ? Math.sign(y) * (Math.PI / 2) : Math.atan(y / x)
+  const E = residual(z, u, c.perm, { a: scale(expi(-thetaAtan), c.beta), mirror: c.mirror })
+  return Object.assign(c, { thetaAtan, rmsAtan: Math.sqrt(E / z.length) })
+}
+
+export function analyse(abc, def, opts = {}) {
+  const { K, J, z, u, all, best } = fit(abc, def, { pairings: PERMS, mirror: opts.mirror, scaling: opts.scaling })
+  all.forEach((c) => withAtan(c, z, u))
+  const ggb = GGB_PERMS.map((p) => withAtan(candidate(z, u, p), z, u))
+  const ggbPick = ggb.reduce((a, b) => (Math.abs(b.thetaAtan) < Math.abs(a.thetaAtan) ? b : a))
+  return { K, J, z, u, all, best, ggb, ggbPick }
+}
+
+// Points of DEF after a map, placed at ABC's centroid.
+export function placed(an, map) {
+  return an.u.map((w) => add(an.K, applyMap(map, w)))
+}
+
+// GeoGebra's result: DEF rotated as a whole by −θ about its own centroid, then moved to K.
+export function ggbPlaced(an) {
+  return placed(an, { a: expi(-an.ggbPick.thetaAtan), mirror: false })
+}
+
+// Keeps the current pairing until another is better by more than `margin` (a fraction of
+// the current error). Ties between pairings are where fits jump; this stops them flickering.
+export function withHysteresis(an, currentId, margin) {
+  const current = an.all.find((c) => c.id === currentId)
+  if (!current) return an.best
+  return an.best.E < current.E * (1 - margin) - 1e-12 ? an.best : current
+}
+
+export const LETTERS = ['D', 'E', 'F']
+export const pairing = (perm) => perm.map((j, i) => `${'ABC'[i]}${LETTERS[j]}`).join(' ')
+
+// ---- Kendall's shape sphere ----------------------------------------------------------
+//
+// A triangle's shape, free of position, turn and size, as a unit vector. The poles are the
+// two equilateral triangles, the equator the collinear ones, and the height is
+// (4/√3)·area / Σ|p − K|². This is Kendall's shape sphere S²(½) enlarged to radius 1, so the
+// angle between two points here is twice the Riemannian shape distance ρ. For any pairing,
+// |s|²/(‖z‖²‖u‖²) = (1 + n_ABC · n_DEF′)/2, so the best pairing is the image of DEF nearest
+// to ABC, and two pairings tie on the great circle halfway between their images. With mirror
+// images allowed those circles are fixed: the equator and three circles of isosceles shapes.
+// The best pairing changes when either triangle crosses one, but the fitted figure jumps
+// only when ABC does; a flat or isosceles DEF is its own relabelled mirror image, so the two
+// tied pairings place the same figure.
+export function shapePoint(tri) {
+  const w1 = scale(sub(tri[1], tri[0]), 1 / Math.SQRT2)
+  const w2 = scale(sub(scale(tri[2], 2), add(tri[0], tri[1])), 1 / Math.sqrt(6))
+  const n = abs(w1) ** 2 + abs(w2) ** 2
+  if (n === 0) return [0, 0, 1]
+  const c = mul(conj(w1), w2)
+  return [(abs(w1) ** 2 - abs(w2) ** 2) / n, (2 * c[0]) / n, (2 * c[1]) / n]
+}
+
+// DEF as each candidate sees it: relabelled so its i-th vertex is paired with ABC's i-th,
+// and mirrored for a mirror candidate. Ordered as analyse() numbers its candidates.
+export function shapeImages(def, mirror) {
+  const mirrors = mirror ? [false, true] : [false]
+  return mirrors.flatMap((m) => PERMS.map((p) => shapePoint(p.map((j) => (m ? conj(def[j]) : def[j])))))
+}
+
+export const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+// ---- soft fit ------------------------------------------------------------------------
+//
+// Instead of the single best pairing, every pairing is weighted by e^{−(rms² − rms_best²)/σ²}
+// and each vertex of ABC gets the weighted mean of where the pairings put its partner.
+// The weights change continuously with the vertices, so the fit does too: at a tie the two
+// pairings share the weight and the fit lies between them. σ → 0 is the hard fit. This is
+// the softassign idea of Rangarajan, Chui and Bookstein; lowering σ step by step is
+// deterministic annealing.
+export function softFit(an, sigma) {
+  const best = an.best.rms ** 2
+  const raw = an.all.map((c) => (sigma > 0 ? Math.exp(-(c.rms ** 2 - best) / (sigma * sigma)) : c.id === an.best.id ? 1 : 0))
+  const total = raw.reduce((a, b) => a + b, 0)
+  const weights = raw.map((v) => v / total)
+  const partner = (c, i) => add(an.K, applyMap(c.map, an.u[c.perm[i]]))
+  const pts = [0, 1, 2].map((i) => an.all.reduce((acc, c, k) => add(acc, scale(partner(c, i), weights[k])), [0, 0]))
+  return { pts, weights }
+}

@@ -1,9 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  fit, distance, permutations, cyclicPairings, analyse, shapePoint, dot3,
-  add, sub, mul, conj, expi, abs,
-} from '../js/procrustes.js'
+import { fit, distance, permutations, cyclicPairings, add, sub, mul, conj, expi, abs } from '../js/procrustes.js'
+import { analyse, shapePoint, dot3, PERMS } from '../js/triangle.js'
 
 const close = (a, b, eps = 1e-9) => abs(sub(a, b)) < eps
 const moved = (pts, a, t) => pts.map((p) => add(mul(p, a), t))
@@ -50,6 +48,7 @@ test('pairings: n! orderings, 2n cyclic ones, and the triangle matches analyse()
   const D = [[5, 5], [6, 9], [9, 6]]
   const a = analyse(T, D, { mirror: true }).all.map((c) => c.E)
   const b = fit(T, D, { pairings: 'cyclic', mirror: true }).all.map((c) => c.E)
+  assert.deepEqual(cyclicPairings(3), PERMS)
   a.forEach((e, i) => assert.ok(Math.abs(e - b[i]) < 1e-12))
 })
 
